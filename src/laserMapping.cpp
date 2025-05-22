@@ -1169,7 +1169,7 @@ int main(int argc, char** argv)
 
           geometry_msgs::msg::Quaternion geoQuat = tf2::toMsg(q);
 
-          odomAftMapped.header.stamp = rclcpp::Time(timeLaserCloudCornerLast * 1e9);  // Convert sec to nanosec
+          odomAftMapped.header.stamp = rclcpp::Time(timeLaserCloudCornerLast);  // Convert sec to nanosec
           odomAftMapped.header.frame_id = "camera_init";
           odomAftMapped.child_frame_id = "aft_mapped";
 
