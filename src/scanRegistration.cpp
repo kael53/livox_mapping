@@ -139,7 +139,7 @@ void laserCloudHandler_temp(const sensor_msgs::msg::PointCloud2::SharedPtr laser
     pcl::fromROSMsg(*msg_window[i], temp);
     *laserCloudIn += temp;
   }
-  sensor_msgs::PointCloud2 laserCloudOutMsg;
+  sensor_msgs::msg::PointCloud2 laserCloudOutMsg;
   pcl::toROSMsg(*laserCloudIn, laserCloudOutMsg);
   laserCloudOutMsg.header.stamp = laserCloudMsg->header.stamp;
   laserCloudOutMsg.header.frame_id = "/livox";

@@ -1,6 +1,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include "livox_ros_driver2/msg/custom_msg.hpp"
+#include <pcl/point_types.h>
+#include <pcl/point_cloud.h>
 
 typedef pcl::PointXYZINormal PointType;
 typedef pcl::PointCloud<PointType> PointCloudXYZI;
