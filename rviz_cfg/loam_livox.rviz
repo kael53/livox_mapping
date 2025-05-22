@@ -63,7 +63,7 @@ Visualization Manager:
       Plane Cell Count: 160
       Reference Frame: <Fixed Frame>
       Value: false
-    - Class: rviz_common/Axes
+    - Class: rviz_default_plugins/Axes
       Enabled: true
       Length: 0.5
       Name: Axes
@@ -74,7 +74,7 @@ Visualization Manager:
       Displays:
         - Alpha: 1
           Buffer Length: 1
-          Class: rviz_common/Path
+          Class: rviz_default_plugins/Path
           Color: 255; 170; 0
           Enabled: false
           Head Diameter: 0.300000012
@@ -468,7 +468,7 @@ Visualization Manager:
           Value: false
       Enabled: true
       Name: Features
-    - Class: rviz_common/Axes
+    - Class: rviz_default_plugins/Axes
       Enabled: true
       Length: 1
       Name: Axes
