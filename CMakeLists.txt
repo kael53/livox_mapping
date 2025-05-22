@@ -38,7 +38,12 @@ include_directories(
   include
   ${EIGEN3_INCLUDE_DIR}
   ${PCL_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
 )
+link_directories(
+  ${PCL_LIBRARY_DIRS}
+)
+add_definitions(${PCL_DEFINITIONS})
 
 # Livox Repub Node
 add_executable(livox_repub src/livox_repub.cpp)
@@ -112,7 +117,6 @@ target_link_libraries(loam_laserMapping
   ${OpenCV_LIBS}
 )
 
-# Install
 install(TARGETS
   livox_repub
   loam_scanRegistration
