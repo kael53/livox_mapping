@@ -68,9 +68,9 @@ rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr subLaserCloudSurf
 rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr subLaserCloudFullRes;
 
 int kfNum = 0;
-builtin_interfaces::msg::Time timeLaserCloudCornerLast = 0;
-builtin_interfaces::msg::Time timeLaserCloudSurfLast = 0;
-builtin_interfaces::msg::Time timeLaserCloudFullRes = 0;
+builtin_interfaces::msg::Time timeLaserCloudCornerLast;
+builtin_interfaces::msg::Time timeLaserCloudSurfLast;
+builtin_interfaces::msg::Time timeLaserCloudFullRes;
 
 bool newLaserCloudCornerLast = false;
 bool newLaserCloudSurfLast = false;
@@ -415,7 +415,7 @@ int main(int argc, char** argv)
     node->declare_parameter("filter_parameter_corner", 0.2);
     node->declare_parameter("filter_parameter_surf", 0.2);
 
-    nav_msgs::Odometry odomAftMapped;
+    nav_msgs::msg::Odometry odomAftMapped;
     odomAftMapped.header.frame_id = "/camera_init";
     odomAftMapped.child_frame_id = "/aft_mapped";
 
