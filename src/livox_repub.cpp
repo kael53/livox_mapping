@@ -26,36 +26,50 @@ private:
   std::vector<std::shared_ptr<livox_ros_driver2::msg::CustomMsg const>> livox_data;
 
   void LivoxMsgCbk1(const std::shared_ptr<livox_ros_driver2::msg::CustomMsg const>& livox_msg_in) {
-  livox_data.push_back(livox_msg_in);
-  if (livox_data.size() < TO_MERGE_CNT) return;
+    try {
+      livox_data.push_back(livox_msg_in);
+      if (livox_data.size() < TO_MERGE_CNT) return;
 
-  pcl::PointCloud<PointType> pcl_in;
+      pcl::PointCloud<PointType> pcl_in;
 
-  for (size_t j = 0; j < livox_data.size(); j++) {
-    auto& livox_msg = livox_data[j];
-    auto time_end = livox_msg->points.back().offset_time;
-    for (unsigned int i = 0; i < livox_msg->point_num; ++i) {
-      PointType pt;
-      pt.x = livox_msg->points[i].x;
-      pt.y = livox_msg->points[i].y;
-      pt.z = livox_msg->points[i].z;
-      float s = livox_msg->points[i].offset_time / (float)time_end;
+      for (size_t j = 0; j < livox_data.size(); j++) {
+        auto& livox_msg = livox_data[j];
+        if (livox_msg->points.empty()) {
+          RCLCPP_WARN(this->get_logger(), "Empty point cloud received");
+          continue;
+        }
 
-      pt.intensity = livox_msg->points[i].line +livox_msg->points[i].reflectivity /10000.0 ; // The integer part is line number and the decimal part is timestamp
-      pt.curvature = s*0.1;
-      pcl_in.push_back(pt);
+        auto time_end = livox_msg->points.back().offset_time;
+        for (unsigned int i = 0; i < livox_msg->point_num; ++i) {
+          PointType pt;
+          pt.x = livox_msg->points[i].x;
+          pt.y = livox_msg->points[i].y;
+          pt.z = livox_msg->points[i].z;
+          float s = livox_msg->points[i].offset_time / (float)time_end;
+
+          pt.intensity = livox_msg->points[i].line + livox_msg->points[i].reflectivity / 10000.0;  // The integer part is line number and the decimal part is timestamp
+          pt.curvature = s * 0.1;
+          pcl_in.push_back(pt);
+        }
+      }
+
+      if (!pcl_in.empty()) {
+        unsigned long timebase_ns = livox_data[0]->timebase;
+        rclcpp::Time timestamp(timebase_ns);
+
+        sensor_msgs::msg::PointCloud2 pcl_ros_msg;
+        pcl::toROSMsg(pcl_in, pcl_ros_msg);
+        pcl_ros_msg.header.stamp = timestamp;
+        pcl_ros_msg.header.frame_id = "livox";  // Removed leading slash for ROS2 convention
+        pub_pcl_out1->publish(pcl_ros_msg);
+        
+        // Also publish to pcl0 for compatibility
+        pub_pcl_out0->publish(pcl_ros_msg);
+      }
+      livox_data.clear();
+    } catch (const std::exception& e) {
+      RCLCPP_ERROR(this->get_logger(), "Error in LivoxMsgCbk1: %s", e.what());
     }
-  }
-
-    unsigned long timebase_ns = livox_data[0]->timebase;
-    rclcpp::Time timestamp(timebase_ns, RCL_SYSTEM_TIME);
-
-    sensor_msgs::msg::PointCloud2 pcl_ros_msg;
-    pcl::toROSMsg(pcl_in, pcl_ros_msg);
-    pcl_ros_msg.header.stamp = timestamp;
-    pcl_ros_msg.header.frame_id = "/livox";
-    pub_pcl_out1->publish(pcl_ros_msg);
-    livox_data.clear();
   }
 };
 

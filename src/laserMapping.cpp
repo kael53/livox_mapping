@@ -59,22 +59,31 @@ public:
   LaserMappingNode()
     : Node("laser_mapping"), tf_broadcaster_(this)
   {
+    // Declare ROS2 parameters with defaults from original code
     this->declare_parameter("map_file_path", "");
     this->declare_parameter("filter_parameter_corner", 0.2);
     this->declare_parameter("filter_parameter_surf", 0.4);
 
-    pubLaserCloudSurround = this->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_cloud_surround", 10);
-    pubLaserCloudSurround_corner = this->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_cloud_surround_corner", 10);
-    pubLaserCloudFullRes = this->create_publisher<sensor_msgs::msg::PointCloud2>("/velodyne_cloud_registered", 10);
+    // Set up QoS profile to match ROS1 behavior
+    rclcpp::QoS qos(10);
+    qos.reliability(rclcpp::ReliabilityPolicy::Reliable);
+    qos.durability(rclcpp::DurabilityPolicy::Volatile);
+    qos.history(rclcpp::HistoryPolicy::Keep_Last);
 
+    // Create publishers
+    pubLaserCloudSurround = this->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_cloud_surround", qos);
+    pubLaserCloudSurround_corner = this->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_cloud_surround_corner", qos);
+    pubLaserCloudFullRes = this->create_publisher<sensor_msgs::msg::PointCloud2>("/velodyne_cloud_registered", qos);
+
+    // Create subscriptions
     subLaserCloudCornerLast = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-      "/laser_cloud_sharp", 10, std::bind(&LaserMappingNode::laserCloudCornerLastHandler, this, std::placeholders::_1));
+      "/laser_cloud_sharp", qos, std::bind(&LaserMappingNode::laserCloudCornerLastHandler, this, std::placeholders::_1));
     
     subLaserCloudSurfLast = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-      "/laser_cloud_flat", 10, std::bind(&LaserMappingNode::laserCloudSurfLastHandler, this, std::placeholders::_1));
+      "/laser_cloud_flat", qos, std::bind(&LaserMappingNode::laserCloudSurfLastHandler, this, std::placeholders::_1));
     
     subLaserCloudFullRes = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-      "/livox_cloud", 10, std::bind(&LaserMappingNode::laserCloudFullResHandler, this, std::placeholders::_1));
+      "/livox_pcl0", qos, std::bind(&LaserMappingNode::laserCloudFullResHandler, this, std::placeholders::_1));
 
     kfNum = 0;
     timeLaserCloudCornerLast = 0;

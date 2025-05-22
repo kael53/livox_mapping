@@ -55,13 +55,19 @@ class ScanRegistrationNode : public rclcpp::Node
 public:
   ScanRegistrationNode() : Node("scan_registration")
   {
-    pubLaserCloud = this->create_publisher<sensor_msgs::msg::PointCloud2>("/velodyne_cloud_2", 10);
-    pubCornerPointsSharp = this->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_cloud_sharp", 10);
-    pubSurfPointsFlat = this->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_cloud_flat", 10);
-    pubLaserCloud_temp = this->create_publisher<sensor_msgs::msg::PointCloud2>("/velodyne_cloud_registered", 10);
+    // Set up QoS profile to match ROS1 behavior
+    rclcpp::QoS qos(10);
+    qos.reliability(rclcpp::ReliabilityPolicy::Reliable);
+    qos.durability(rclcpp::DurabilityPolicy::Volatile);
+    qos.history(rclcpp::HistoryPolicy::Keep_Last);
+
+    pubLaserCloud = this->create_publisher<sensor_msgs::msg::PointCloud2>("/velodyne_cloud_2", qos);
+    pubCornerPointsSharp = this->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_cloud_sharp", qos);
+    pubSurfPointsFlat = this->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_cloud_flat", qos);
+    pubLaserCloud_temp = this->create_publisher<sensor_msgs::msg::PointCloud2>("/velodyne_cloud_registered", qos);
 
     subscription_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-      "/livox_pcl0", 10, std::bind(&ScanRegistrationNode::cloudHandler, this, std::placeholders::_1));
+      "/livox_pcl0", qos, std::bind(&ScanRegistrationNode::cloudHandler, this, std::placeholders::_1));
   }
 
 private:

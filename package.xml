@@ -20,6 +20,8 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>nav_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>sensor_msgs</depend>
@@ -30,6 +32,7 @@
   <depend>livox_ros_driver2</depend>
   <depend>eigen</depend>
   <depend>pcl_conversions</depend>
+  <depend>pcl_ros</depend>
   <depend>libpcl-all-dev</depend>
   <depend>libopencv-dev</depend>
 
