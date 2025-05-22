@@ -891,53 +891,58 @@ int main(int argc, char** argv)
                                 matA0.at<float>(j, 0) = laserCloudSurfFromMap->points[pointSearchInd[j]].x;
                                 matA0.at<float>(j, 1) = laserCloudSurfFromMap->points[pointSearchInd[j]].y;
                                 matA0.at<float>(j, 2) = laserCloudSurfFromMap->points[pointSearchInd[j]].z;
-                        }
-                        //matA0*matX0=matB0
-                        //AX+BY+CZ+D = 0 <=> AX+BY+CZ=-D <=> (A/D)X+(B/D)Y+(C/D)Z = -1
-                        //(X,Y,Z)<=>mat_a0
-                        //A/D, B/D, C/D <=> mat_x0
-                
-                        cv::solve(matA0, matB0, matX0, cv::DECOMP_QR);  //TODO
-
-                        float pa = matX0.at<float>(0, 0);
-                        float pb = matX0.at<float>(1, 0);
-                        float pc = matX0.at<float>(2, 0);
-                        float pd = 1;
-
-                        //ps is the norm of the plane normal vector
-                        //pd is the distance from point to plane
-                        float ps = sqrt(pa * pa + pb * pb + pc * pc);
-                        pa /= ps;
-                        pb /= ps;
-                        pc /= ps;
-                        pd /= ps;
-
-                        bool planeValid = true;
-                        for (int j = 0; j < 8; j++) {
-                            if (fabs(pa * laserCloudSurfFromMap->points[pointSearchInd[j]].x +
-                                        pb * laserCloudSurfFromMap->points[pointSearchInd[j]].y +
-                                        pc * laserCloudSurfFromMap->points[pointSearchInd[j]].z + pd) > 0.2) {
-                                planeValid = false;
-                                break;
                             }
-                        }
 
-                        if (planeValid) {
-                            //loss fuction
-                            float pd2 = pa * pointSel.x + pb * pointSel.y + pc * pointSel.z + pd;
+                            //matA0*matX0=matB0
+                            //AX+BY+CZ+D = 0 <=> AX+BY+CZ=-D <=> (A/D)X+(B/D)Y+(C/D)Z = -1
+                            //(X,Y,Z)<=>mat_a0
+                            //A/D, B/D, C/D <=> mat_x0
+                
+                            cv::solve(matA0, matB0, matX0, cv::DECOMP_QR);  //TODO
 
-                            //if(fabs(pd2) > 0.1) continue;
+                
+                            float pa = matX0.at<float>(0, 0);
+                            float pb = matX0.at<float>(1, 0);
+                            float pc = matX0.at<float>(2, 0);    
+                            float pd = 1;
 
-                            float s = 1 - 0.9 * fabs(pd2) / sqrt(sqrt(pointSel.x * pointSel.x + pointSel.y * pointSel.y + pointSel.z * pointSel.z));
+                            //ps is the norm of the plane normal vector
+                            //pd is the distance from point to plane
+                            float ps = sqrt(pa * pa + pb * pb + pc * pc);
+                            pa /= ps;
+                            pb /= ps;
+                            pc /= ps;
+                            pd /= ps;
 
-                            coeff.x = s * pa;
-                            coeff.y = s * pb;
-                            coeff.z = s * pc;
-                            coeff.intensity = s * pd2;
+                            bool planeValid = true;
+                            for (int j = 0; j < 8; j++) {
+                                if (fabs(pa * laserCloudSurfFromMap->points[pointSearchInd[j]].x +
+                                    pb * laserCloudSurfFromMap->points[pointSearchInd[j]].y +
+                                    pc * laserCloudSurfFromMap->points[pointSearchInd[j]].z + pd) > 0.2) {
+                                        planeValid = false;
+                                        break;
+                                }
+                            }
 
-                            if (s > 0.1) {
-                                laserCloudOri->push_back(pointOri);
-                                coeffSel->push_back(coeff);
+
+                            if (planeValid) {
+                                //loss fuction
+                                float pd2 = pa * pointSel.x + pb * pointSel.y + pc * pointSel.z + pd;
+
+                                //if(fabs(pd2) > 0.1) continue;
+
+                                float s = 1 - 0.9 * fabs(pd2) / sqrt(sqrt(pointSel.x * pointSel.x + pointSel.y * pointSel.y + pointSel.z * pointSel.z));
+
+
+                                coeff.x = s * pa;
+                                coeff.y = s * pb;
+                                coeff.z = s * pc;
+                                coeff.intensity = s * pd2;
+
+                                if (s > 0.1) {
+                                    laserCloudOri->push_back(pointOri);
+                                    coeffSel->push_back(coeff);
+                                }
                             }
                         }
                     }
@@ -1214,8 +1219,6 @@ int main(int argc, char** argv)
           t4 = clock();
 
           std::cout<<"mapping time : "<<t2-t1<<" "<<t3-t2<<" "<<t4-t3<<std::endl;
-
-          
       }
 
       status = rclcpp::ok();
