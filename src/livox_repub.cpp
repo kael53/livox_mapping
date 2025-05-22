@@ -3,6 +3,7 @@
 #include "livox_ros_driver2/msg/custom_msg.hpp"
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
+#include <pcl_conversions/pcl_conversions.h>  // Include for pcl::toROSMsg
 
 typedef pcl::PointXYZINormal PointType;
 typedef pcl::PointCloud<PointType> PointCloudXYZI;
