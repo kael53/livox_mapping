@@ -29,6 +29,7 @@ find_package(std_msgs REQUIRED)
 find_package(pcl_ros REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 find_package(livox_ros_driver2 REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED)
@@ -50,6 +51,7 @@ add_executable(livox_repub src/livox_repub.cpp)
 ament_target_dependencies(livox_repub
   rclcpp
   geometry_msgs
+  tf2_geometry_msgs
   nav_msgs
   sensor_msgs
   std_msgs
@@ -68,6 +70,7 @@ add_executable(loam_scanRegistration src/scanRegistration.cpp)
 ament_target_dependencies(loam_scanRegistration
   rclcpp
   geometry_msgs
+  tf2_geometry_msgs
   nav_msgs
   sensor_msgs
   std_msgs
@@ -86,6 +89,7 @@ add_executable(loam_scanRegistration_horizon src/scanRegistration_horizon.cpp)
 ament_target_dependencies(loam_scanRegistration_horizon
   rclcpp
   geometry_msgs
+  tf2_geometry_msgs
   nav_msgs
   sensor_msgs
   std_msgs
@@ -104,6 +108,7 @@ add_executable(loam_laserMapping src/laserMapping.cpp)
 ament_target_dependencies(loam_laserMapping
   rclcpp
   geometry_msgs
+  tf2_geometry_msgs
   nav_msgs
   sensor_msgs
   std_msgs
