@@ -57,7 +57,18 @@ class LaserMappingNode : public rclcpp::Node
 {
 public:
   LaserMappingNode()
-    : Node("laser_mapping"), tf_broadcaster_(this)
+    : Node("laser_mapping"), 
+      tf_broadcaster_(this),
+      laserCloudCenWidth(10),
+      laserCloudCenHeight(5),
+      laserCloudCenDepth(10),
+      kfNum(0),
+      timeLaserCloudCornerLast(0),
+      timeLaserCloudSurfLast(0),
+      timeLaserCloudFullRes(0),
+      newLaserCloudCornerLast(false),
+      newLaserCloudSurfLast(false),
+      newLaserCloudFullRes(false)
   {
     // Declare ROS2 parameters with defaults from original code
     this->declare_parameter("map_file_path", "");
@@ -84,14 +95,6 @@ public:
     
     subLaserCloudFullRes = this->create_subscription<sensor_msgs::msg::PointCloud2>(
       "/livox_pcl0", qos, std::bind(&LaserMappingNode::laserCloudFullResHandler, this, std::placeholders::_1));
-
-    kfNum = 0;
-    timeLaserCloudCornerLast = 0;
-    timeLaserCloudSurfLast = 0;
-    timeLaserCloudFullRes = 0;
-
-    newLaserCloudCornerLast = false;
-    newLaserCloudSurfLast = false;
 
 private:
   int kfNum;
@@ -399,9 +402,9 @@ void pointAssociateTobeMapped(PointType const * const pi, PointType * const po)
     po->intensity = pi->intensity;
 }
 
-void laserCloudCornerLastHandler(const sensor_msgs::PointCloud2ConstPtr& laserCloudCornerLast2)
+void laserCloudCornerLastHandler(const sensor_msgs::msg::PointCloud2::SharedPtr laserCloudCornerLast2)
 {
-    timeLaserCloudCornerLast = laserCloudCornerLast2->header.stamp.toSec();
+    timeLaserCloudCornerLast = rclcpp::Time(laserCloudCornerLast2->header.stamp).seconds();
 
     laserCloudCornerLast->clear();
     pcl::fromROSMsg(*laserCloudCornerLast2, *laserCloudCornerLast);
@@ -409,9 +412,9 @@ void laserCloudCornerLastHandler(const sensor_msgs::PointCloud2ConstPtr& laserCl
     newLaserCloudCornerLast = true;
 }
 
-void laserCloudSurfLastHandler(const sensor_msgs::PointCloud2ConstPtr& laserCloudSurfLast2)
+void laserCloudSurfLastHandler(const sensor_msgs::msg::PointCloud2::SharedPtr laserCloudSurfLast2)
 {
-    timeLaserCloudSurfLast = laserCloudSurfLast2->header.stamp.toSec();
+    timeLaserCloudSurfLast = rclcpp::Time(laserCloudSurfLast2->header.stamp).seconds();
 
     laserCloudSurfLast->clear();
     pcl::fromROSMsg(*laserCloudSurfLast2, *laserCloudSurfLast);
@@ -419,9 +422,9 @@ void laserCloudSurfLastHandler(const sensor_msgs::PointCloud2ConstPtr& laserClou
     newLaserCloudSurfLast = true;
 }
 
-void laserCloudFullResHandler(const sensor_msgs::PointCloud2ConstPtr& laserCloudFullRes2)
+void laserCloudFullResHandler(const sensor_msgs::msg::PointCloud2::SharedPtr laserCloudFullRes2)
 {
-    timeLaserCloudFullRes = laserCloudFullRes2->header.stamp.toSec();
+    timeLaserCloudFullRes = rclcpp::Time(laserCloudFullRes2->header.stamp).seconds();
 
     laserCloudFullRes->clear();
     laserCloudFullResColor->clear();
@@ -432,27 +435,12 @@ void laserCloudFullResHandler(const sensor_msgs::PointCloud2ConstPtr& laserCloud
 
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "laserMapping");
-    ros::NodeHandle nh;
-
-    ros::Subscriber subLaserCloudCornerLast = nh.subscribe<sensor_msgs::PointCloud2>
-            ("/laser_cloud_sharp", 100, laserCloudCornerLastHandler);
-
-    ros::Subscriber subLaserCloudSurfLast = nh.subscribe<sensor_msgs::PointCloud2>
-            ("/laser_cloud_flat", 100, laserCloudSurfLastHandler);
-
-    ros::Subscriber subLaserCloudFullRes = nh.subscribe<sensor_msgs::PointCloud2>
-            ("/livox_cloud", 100, laserCloudFullResHandler);
-
-    ros::Publisher pubLaserCloudSurround = nh.advertise<sensor_msgs::PointCloud2>
-            ("/laser_cloud_surround", 100);
-    ros::Publisher pubLaserCloudSurround_corner = nh.advertise<sensor_msgs::PointCloud2>
-            ("/laser_cloud_surround_corner", 100);
-
-    ros::Publisher pubLaserCloudFullRes = nh.advertise<sensor_msgs::PointCloud2>
-            ("/velodyne_cloud_registered", 100);
-
-    ros::Publisher pubOdomAftMapped = nh.advertise<nav_msgs::Odometry> ("/aft_mapped_to_init", 1);
+    rclcpp::init(argc, argv);
+    auto node = std::make_shared<LaserMappingNode>();
+    RCLCPP_INFO(node->get_logger(), "Starting Laser Mapping Node");
+    rclcpp::spin(node);
+    rclcpp::shutdown();
+    return 0;
     nav_msgs::Odometry odomAftMapped;
     odomAftMapped.header.frame_id = "/camera_init";
     odomAftMapped.child_frame_id = "/aft_mapped";
