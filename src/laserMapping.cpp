@@ -34,31 +34,74 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #include <math.h>
+#include <memory>
 
-#include <nav_msgs/Odometry.h>
+#include <nav_msgs/msg/odometry.hpp>
 #include <opencv/cv.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/kdtree/kdtree_flann.h>
-#include<pcl/io/pcd_io.h>
+#include <pcl/io/pcd_io.h>
 
-#include <ros/ros.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <tf/transform_datatypes.h>
-#include <tf/transform_broadcaster.h>
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2_ros/transform_broadcaster.h>
+#include <geometry_msgs/msg/transform_stamped.hpp>
 
 typedef pcl::PointXYZI PointType;
 
-int kfNum = 0;
+class LaserMappingNode : public rclcpp::Node
+{
+public:
+  LaserMappingNode()
+    : Node("laser_mapping"), tf_broadcaster_(this)
+  {
+    this->declare_parameter("map_file_path", "");
+    this->declare_parameter("filter_parameter_corner", 0.2);
+    this->declare_parameter("filter_parameter_surf", 0.4);
 
-float timeLaserCloudCornerLast = 0;
-float timeLaserCloudSurfLast = 0;
-float timeLaserCloudFullRes = 0;
+    pubLaserCloudSurround = this->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_cloud_surround", 10);
+    pubLaserCloudSurround_corner = this->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_cloud_surround_corner", 10);
+    pubLaserCloudFullRes = this->create_publisher<sensor_msgs::msg::PointCloud2>("/velodyne_cloud_registered", 10);
 
-bool newLaserCloudCornerLast = false;
-bool newLaserCloudSurfLast = false;
+    subLaserCloudCornerLast = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+      "/laser_cloud_sharp", 10, std::bind(&LaserMappingNode::laserCloudCornerLastHandler, this, std::placeholders::_1));
+    
+    subLaserCloudSurfLast = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+      "/laser_cloud_flat", 10, std::bind(&LaserMappingNode::laserCloudSurfLastHandler, this, std::placeholders::_1));
+    
+    subLaserCloudFullRes = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+      "/livox_cloud", 10, std::bind(&LaserMappingNode::laserCloudFullResHandler, this, std::placeholders::_1));
+
+    kfNum = 0;
+    timeLaserCloudCornerLast = 0;
+    timeLaserCloudSurfLast = 0;
+    timeLaserCloudFullRes = 0;
+
+    newLaserCloudCornerLast = false;
+    newLaserCloudSurfLast = false;
+
+private:
+  int kfNum;
+  float timeLaserCloudCornerLast;
+  float timeLaserCloudSurfLast;
+  float timeLaserCloudFullRes;
+
+  bool newLaserCloudCornerLast;
+  bool newLaserCloudSurfLast;
+
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubLaserCloudSurround;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubLaserCloudSurround_corner;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubLaserCloudFullRes;
+
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr subLaserCloudCornerLast;
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr subLaserCloudSurfLast;
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr subLaserCloudFullRes;
+
+  tf2_ros::TransformBroadcaster tf_broadcaster_;
 bool newLaserCloudFullRes = false;
 
 int laserCloudCenWidth = 10;
@@ -1171,7 +1214,39 @@ int main(int argc, char** argv)
             q.setY( odomAftMapped.pose.pose.orientation.y );
             q.setZ( odomAftMapped.pose.pose.orientation.z );
             transform.setRotation( q );
-            br.sendTransform( tf::StampedTransform( transform, odomAftMapped.header.stamp, "/camera_init", "/aft_mapped" ) );
+            geometry_msgs::msg::TransformStamped transformStamped;
+            transformStamped.header.stamp = this->now();
+            transformStamped.header.frame_id = "camera_init";
+            transformStamped.child_frame_id = "aft_mapped";
+            
+            // Convert transform to ROS 2 message
+            transformStamped.transform.translation.x = transformAftMapped[3];
+            transformStamped.transform.translation.y = transformAftMapped[4];
+            transformStamped.transform.translation.z = transformAftMapped[5];
+            
+            tf2::Quaternion q;
+            q.setRPY(transformAftMapped[0], transformAftMapped[1], transformAftMapped[2]);
+            transformStamped.transform.rotation.x = q.x();
+            transformStamped.transform.rotation.y = q.y();
+            transformStamped.transform.rotation.z = q.z();
+            transformStamped.transform.rotation.w = q.w();
+
+            tf_broadcaster_.sendTransform(transformStamped);
+
+            nav_msgs::msg::Odometry odomAftMapped;
+            odomAftMapped.header.stamp = this->now();
+            odomAftMapped.header.frame_id = "camera_init";
+            odomAftMapped.child_frame_id = "aft_mapped";
+
+            odomAftMapped.pose.pose.orientation.x = -q.y();
+            odomAftMapped.pose.pose.orientation.y = -q.z();
+            odomAftMapped.pose.pose.orientation.z = q.x();
+            odomAftMapped.pose.pose.orientation.w = q.w();
+            odomAftMapped.pose.pose.position.x = transformAftMapped[3];
+            odomAftMapped.pose.pose.position.y = transformAftMapped[4];
+            odomAftMapped.pose.pose.position.z = transformAftMapped[5];
+
+            pubOdomAftMapped->publish(odomAftMapped);
 
             kfNum++;
 
