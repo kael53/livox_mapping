@@ -51,6 +51,9 @@
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <tf2_ros/transform_broadcaster.h>
 
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+
 typedef pcl::PointXYZI PointType;
 
 // Global publishers and subscribers to match ROS1 structure
@@ -58,7 +61,7 @@ rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubLaserCloudSurroun
 rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubLaserCloudSurround_corner;
 rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubLaserCloudFullRes;
 rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pubOdomAftMapped;
-std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster;
+std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
 
 rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr subLaserCloudCornerLast;
 rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr subLaserCloudSurfLast;
@@ -399,7 +402,7 @@ int main(int argc, char** argv)
     pubLaserCloudSurround_corner = node->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_cloud_surround_corner", rclcpp::QoS(100));
     pubLaserCloudFullRes = node->create_publisher<sensor_msgs::msg::PointCloud2>("/velodyne_cloud_registered", rclcpp::QoS(100));
     pubOdomAftMapped = node->create_publisher<nav_msgs::msg::Odometry>("/aft_mapped_to_init", rclcpp::QoS(1));
-    tf_broadcaster = std::make_shared<tf2_ros::TransformBroadcaster>(node);
+    tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(node);
     subLaserCloudCornerLast = node->create_subscription<sensor_msgs::msg::PointCloud2>(
         "/laser_cloud_sharp", rclcpp::QoS(100), laserCloudCornerLastHandler);
     subLaserCloudSurfLast = node->create_subscription<sensor_msgs::msg::PointCloud2>(
