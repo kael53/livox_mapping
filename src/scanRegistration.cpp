@@ -53,7 +53,6 @@ typedef pcl::PointXYZI PointType;
 rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubLaserCloud;
 rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubCornerPointsSharp;
 rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubSurfPointsFlat;
-rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubLaserCloud_temp;
 rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr subscription_;
 
 int scanID;
@@ -528,12 +527,11 @@ int main(int argc, char** argv)
 {
     rclcpp::init(argc, argv);
     auto node = rclcpp::Node::make_shared("scanRegistration");
-    pubLaserCloud = node->create_publisher<sensor_msgs::msg::PointCloud2>("/velodyne_cloud_2", rclcpp::QoS(10));
-    pubCornerPointsSharp = node->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_cloud_sharp", rclcpp::QoS(10));
-    pubSurfPointsFlat = node->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_cloud_flat", rclcpp::QoS(10));
-    pubLaserCloud_temp = node->create_publisher<sensor_msgs::msg::PointCloud2>("/velodyne_cloud_registered", rclcpp::QoS(10));
+    pubLaserCloud = node->create_publisher<sensor_msgs::msg::PointCloud2>("/livox_cloud", 20);
+    pubCornerPointsSharp = node->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_cloud_sharp", 20);
+    pubSurfPointsFlat = node->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_cloud_flat", 20);
     subscription_ = node->create_subscription<sensor_msgs::msg::PointCloud2>(
-        "/livox_pcl0", rclcpp::QoS(10), laserCloudHandler);
+        "/livox/lidar", 100, laserCloudHandler);
     rclcpp::spin(node);
     rclcpp::shutdown();
     return 0;

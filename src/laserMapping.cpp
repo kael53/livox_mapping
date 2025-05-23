@@ -398,26 +398,28 @@ int main(int argc, char** argv)
 {
     rclcpp::init(argc, argv);
     auto node = rclcpp::Node::make_shared("laserMapping");
-    pubLaserCloudSurround = node->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_cloud_surround", rclcpp::QoS(100));
-    pubLaserCloudSurround_corner = node->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_cloud_surround_corner", rclcpp::QoS(100));
-    pubLaserCloudFullRes = node->create_publisher<sensor_msgs::msg::PointCloud2>("/velodyne_cloud_registered", rclcpp::QoS(100));
-    pubOdomAftMapped = node->create_publisher<nav_msgs::msg::Odometry>("/aft_mapped_to_init", rclcpp::QoS(1));
+
+    pubLaserCloudSurround = node->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_cloud_surround", 100);
+    pubLaserCloudSurround_corner = node->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_cloud_surround_corner", 100);
+    pubLaserCloudFullRes = node->create_publisher<sensor_msgs::msg::PointCloud2>("/velodyne_cloud_registered", 100);
+
     tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(node);
     subLaserCloudCornerLast = node->create_subscription<sensor_msgs::msg::PointCloud2>(
-        "/laser_cloud_sharp", rclcpp::QoS(100), laserCloudCornerLastHandler);
+        "/laser_cloud_sharp", 100, laserCloudCornerLastHandler);
     subLaserCloudSurfLast = node->create_subscription<sensor_msgs::msg::PointCloud2>(
-        "/laser_cloud_flat", rclcpp::QoS(100), laserCloudSurfLastHandler);
+        "/laser_cloud_flat", 100, laserCloudSurfLastHandler);
     subLaserCloudFullRes = node->create_subscription<sensor_msgs::msg::PointCloud2>(
-        "/livox_pcl0", rclcpp::QoS(100), laserCloudFullResHandler);
+        "/livox_cloud", 100, laserCloudFullResHandler);
+
+    pubOdomAftMapped = node->create_publisher<nav_msgs::msg::Odometry>("/aft_mapped_to_init", 1);
+    nav_msgs::msg::Odometry odomAftMapped;
+    odomAftMapped.header.frame_id = "/camera_init";
+    odomAftMapped.child_frame_id = "/aft_mapped";
 
     // Declare parameters
     node->declare_parameter("map_file_path", "");
     node->declare_parameter("filter_parameter_corner", 0.2);
     node->declare_parameter("filter_parameter_surf", 0.2);
-
-    nav_msgs::msg::Odometry odomAftMapped;
-    odomAftMapped.header.frame_id = "/camera_init";
-    odomAftMapped.child_frame_id = "/aft_mapped";
 
     // Load parameters
     std::string map_file_path;
@@ -1017,17 +1019,17 @@ int main(int argc, char** argv)
                       isDegenerate = false;
                       float eignThre[6] = {1, 1, 1, 1, 1, 1};
                       for (int i = 5; i >= 0; i--) {
-                        if (matE.at<float>(0, i) < eignThre[i]) {
+                        if (matE.at<float>(0, i) < eignThre[i]) {  
                           for (int j = 0; j < 6; j++) {
                             matV2.at<float>(i, j) = 0;
+                          }
+                          isDegenerate = true;
+                        } else {
+                          break;
                         }
-                        isDegenerate = true;
-                      } else {
-                        break;
                       }
+                      matP = matV.inv() * matV2;
                     }
-                    matP = matV.inv() * matV2;
-                  }
 
                   if (isDegenerate) {
                     cv::Mat matX2(6, 1, CV_32F, cv::Scalar::all(0));
