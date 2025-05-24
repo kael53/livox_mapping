@@ -20,10 +20,7 @@ def generate_launch_description():
         package='livox_mapping',
         executable='loam_scanRegistration',
         name='scanRegistration',
-        output='screen',
-        remappings=[
-        ('/livox_pcl0', '/livox/lidar')
-        ]
+        output='screen'
     )
 
     laser_mapping = Node(
@@ -35,10 +32,7 @@ def generate_launch_description():
             'map_file_path': ' ',
             'filter_parameter_corner': 0.1,
             'filter_parameter_surf': 0.2
-        }],
-        remappings=[
-        ('/livox_pcl0', '/livox/lidar')
-        ]
+        }]
     )
 
     rviz_node = Node(
