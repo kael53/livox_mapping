@@ -8,7 +8,6 @@
 typedef pcl::PointXYZINormal PointType;
 typedef pcl::PointCloud<PointType> PointCloudXYZI;
 
-rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_pcl_out0;
 rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_pcl_out1;
 rclcpp::Subscription<livox_ros_driver2::msg::CustomMsg>::SharedPtr sub_livox_msg1;
 uint64_t TO_MERGE_CNT = 1;
@@ -50,11 +49,8 @@ void LivoxMsgCbk1(const livox_ros_driver2::msg::CustomMsg::SharedPtr livox_msg_i
       sensor_msgs::msg::PointCloud2 pcl_ros_msg;
       pcl::toROSMsg(pcl_in, pcl_ros_msg);
       pcl_ros_msg.header.stamp = timestamp;
-      pcl_ros_msg.header.frame_id = "livox";  // Removed leading slash for ROS2 convention
+      pcl_ros_msg.header.frame_id = "/livox";  // Removed leading slash for ROS2 convention
       pub_pcl_out1->publish(pcl_ros_msg);
-      
-      // Also publish to pcl0 for compatibility
-      pub_pcl_out0->publish(pcl_ros_msg);
     }
     livox_data.clear();
   } catch (const std::exception& e) {
@@ -65,11 +61,12 @@ void LivoxMsgCbk1(const livox_ros_driver2::msg::CustomMsg::SharedPtr livox_msg_i
 int main(int argc, char** argv) {
   rclcpp::init(argc, argv);
   auto node = rclcpp::Node::make_shared("livox_repub");
-  pub_pcl_out0 = node->create_publisher<sensor_msgs::msg::PointCloud2>("/livox_pcl0", 10);
-  pub_pcl_out1 = node->create_publisher<sensor_msgs::msg::PointCloud2>("/livox_pcl1", 10);
-  sub_livox_msg1 = node->create_subscription<livox_ros_driver2::msg::CustomMsg>(
-    "/livox/lidar", 10, LivoxMsgCbk1);
+
+  pub_pcl_out1 = node->create_publisher<sensor_msgs::msg::PointCloud2>("/livox_pcl0", 100);
+  sub_livox_msg1 = node->create_subscription<livox_ros_driver2::msg::CustomMsg>("/livox/lidar", 100, LivoxMsgCbk1);
+
   RCLCPP_INFO(rclcpp::get_logger("livox_repub"), "Starting livox_repub node");
+
   rclcpp::spin(node);
   rclcpp::shutdown();
   return 0;

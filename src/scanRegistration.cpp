@@ -53,7 +53,8 @@ typedef pcl::PointXYZI PointType;
 rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubLaserCloud;
 rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubCornerPointsSharp;
 rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubSurfPointsFlat;
-rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr subscription_;
+rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubLaserCloud_temp;
+rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr subLaserCloud;
 
 int scanID;
 int CloudFeatureFlag[32000];
@@ -516,11 +517,11 @@ void laserCloudHandler(const sensor_msgs::msg::PointCloud2::SharedPtr laserCloud
     cornerPointsSharpMsg.header.frame_id = "/livox";
     pubCornerPointsSharp->publish(cornerPointsSharpMsg);
 
-    sensor_msgs::msg::PointCloud2 surfPointsFlat2;
-    pcl::toROSMsg(surfPointsFlat, surfPointsFlat2);
-    surfPointsFlat2.header.stamp = laserCloudMsg->header.stamp;
-    surfPointsFlat2.header.frame_id = "/livox";
-    pubSurfPointsFlat->publish(surfPointsFlat2);
+    sensor_msgs::msg::PointCloud2 surfPointsFlatMsg;
+    pcl::toROSMsg(surfPointsFlat, surfPointsFlatMsg);
+    surfPointsFlatMsg.header.stamp = laserCloudMsg->header.stamp;
+    surfPointsFlatMsg.header.frame_id = "/livox";
+    pubSurfPointsFlat->publish(surfPointsFlatMsg);
 }
 
 int main(int argc, char** argv)
@@ -530,7 +531,7 @@ int main(int argc, char** argv)
     pubLaserCloud = node->create_publisher<sensor_msgs::msg::PointCloud2>("/livox_cloud", 20);
     pubCornerPointsSharp = node->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_cloud_sharp", 20);
     pubSurfPointsFlat = node->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_cloud_flat", 20);
-    subscription_ = node->create_subscription<sensor_msgs::msg::PointCloud2>(
+    subLaserCloud = node->create_subscription<sensor_msgs::msg::PointCloud2>(
         "/livox/lidar", 100, laserCloudHandler);
     rclcpp::spin(node);
     rclcpp::shutdown();

@@ -50,11 +50,10 @@
 typedef pcl::PointXYZINormal PointType;
 
 // Global publishers and subscribers to match ROS1 structure
-rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_laser_cloud;
-rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_corner_points_sharp;
-rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_surf_points_flat;
-rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_laser_cloud_temp;
-rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr subscription_;
+rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubLaserCloud;
+rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubSurfPointsSharp;
+rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubSurfPointsFlat;
+rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr subLaserCloud;
 
 int scan_id = 0;
 int N_SCANS = 6;
@@ -244,50 +243,18 @@ void laserCloudHandler(const sensor_msgs::msg::PointCloud2::SharedPtr laserCloud
     
     pcl::toROSMsg(*laserCloud, outMsg);
     outMsg.header = laserCloudMsg->header;
-    pub_laser_cloud->publish(outMsg);
+    pubLaserCloud->publish(outMsg);
 
     pcl::toROSMsg(cornerPointsSharp, outMsg);
     outMsg.header = laserCloudMsg->header;
-    pub_corner_points_sharp->publish(outMsg);
+    pubCornerPointsSharp->publish(outMsg);
 
     pcl::toROSMsg(surfPointsFlat, outMsg);
     outMsg.header = laserCloudMsg->header;
-    pub_surf_points_flat->publish(outMsg);
+    pubCornerPointsFlat->publish(outMsg);
 
   } catch (const std::exception& e) {
     RCLCPP_ERROR(rclcpp::get_logger("scan_registration_horizon"), "Error in laserCloudHandler: %s", e.what());
-  }
-}
-
-void laserCloudHandler_temp(const sensor_msgs::msg::PointCloud2::SharedPtr laserCloudMsg)
-{
-  try {
-    auto laserCloudIn = std::make_shared<pcl::PointCloud<PointType>>();
-
-    // Maintain a window of messages
-    if (msg_window.size() < 2) {
-      msg_window.push_back(laserCloudMsg);
-    } else {
-      msg_window.erase(msg_window.begin());
-      msg_window.push_back(laserCloudMsg);
-    }
-
-    // Combine points from the message window
-    for (const auto& msg : msg_window) {
-      pcl::PointCloud<PointType> temp;
-      pcl::fromROSMsg(*msg, temp);
-      *laserCloudIn += temp;
-    }
-
-    // Publish combined cloud
-    sensor_msgs::msg::PointCloud2 laserCloudOutMsg;
-    pcl::toROSMsg(*laserCloudIn, laserCloudOutMsg);
-    laserCloudOutMsg.header = laserCloudMsg->header;
-    laserCloudOutMsg.header.frame_id = "livox";
-    pub_laser_cloud_temp->publish(laserCloudOutMsg);
-
-  } catch (const std::exception& e) {
-    RCLCPP_ERROR(rclcpp::get_logger("scan_registration_horizon"), "Error in laserCloudHandler_temp: %s", e.what());
   }
 }
 
@@ -296,12 +263,11 @@ int main(int argc, char** argv)
 {
   rclcpp::init(argc, argv);
   auto node = rclcpp::Node::make_shared("scan_registration_horizon");
-  pub_laser_cloud = node->create_publisher<sensor_msgs::msg::PointCloud2>("/velodyne_cloud_2", rclcpp::QoS(10));
-  pub_corner_points_sharp = node->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_cloud_sharp", rclcpp::QoS(10));
-  pub_surf_points_flat = node->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_cloud_flat", rclcpp::QoS(10));
-  pub_laser_cloud_temp = node->create_publisher<sensor_msgs::msg::PointCloud2>("/velodyne_cloud_registered", rclcpp::QoS(10));
-  subscription_ = node->create_subscription<sensor_msgs::msg::PointCloud2>(
-      "/livox_pcl0", rclcpp::QoS(10), laserCloudHandler);
+
+  pubLaserCloud = node->create_publisher<sensor_msgs::msg::PointCloud2>("/livox_cloud", 100);
+  pubCornerPointsSharp = node->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_cloud_sharp", 100);
+  pubSurfPointsFlat = node->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_cloud_flat", 100);
+  subLaserCloud = node->create_subscription<sensor_msgs::msg::PointCloud2>("/livox_pcl0", 100, laserCloudHandler);
 
   RCLCPP_INFO(node->get_logger(), "Starting Scan Registration Node");
   rclcpp::spin(node);
