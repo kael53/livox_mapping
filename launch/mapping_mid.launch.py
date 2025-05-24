@@ -16,6 +16,12 @@ def generate_launch_description():
         description='Whether to start RViz'
     )
 
+    map_arg = DeclareLaunchArgument(
+        'map_file_path',
+        default_value=' ',
+        description='Path to the map file'
+    )
+
     scan_registration = Node(
         package='livox_mapping',
         executable='loam_scanRegistration',
@@ -29,7 +35,7 @@ def generate_launch_description():
         name='laserMapping',
         output='screen',
         parameters=[{
-            'map_file_path': ' ',
+            'map_file_path': map_arg,
             'filter_parameter_corner': 0.1,
             'filter_parameter_surf': 0.2
         }]
