@@ -51,8 +51,9 @@ typedef pcl::PointXYZINormal PointType;
 
 // Global publishers and subscribers to match ROS1 structure
 rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubLaserCloud;
-rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubSurfPointsSharp;
+rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubCornerPointsSharp;
 rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubSurfPointsFlat;
+rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubLaserCloud_temp;
 rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr subLaserCloud;
 
 int scan_id = 0;
@@ -124,7 +125,29 @@ bool plane_judge(const std::vector<PointType>& point_list, const int plane_thres
   cv::eigen(mat_a1, mat_d1, mat_v1);
   return mat_d1.at<float>(0, 0) > plane_threshold * mat_d1.at<float>(0, 1);
 }
+void laserCloudHandler_temp(const sensor_msgs::msg::PointCloud2::SharedPtr laserCloudMsg) //for hkmars data
+{
+  pcl::PointCloud<PointType>::Ptr laserCloudIn(new pcl::PointCloud<PointType>());
 
+  if(msg_window.size() < 2){
+    msg_window.push_back(laserCloudMsg);
+  }
+  else{
+    msg_window.erase(msg_window.begin());
+    msg_window.push_back(laserCloudMsg);
+  }
+
+  for(int i = 0; i < msg_window.size();i++){
+    pcl::PointCloud<PointType> temp;
+    pcl::fromROSMsg(*msg_window[i], temp);
+    *laserCloudIn += temp;
+  }
+  sensor_msgs::msg::PointCloud2 laserCloudOutMsg;
+  pcl::toROSMsg(*laserCloudIn, laserCloudOutMsg);
+  laserCloudOutMsg.header.stamp = laserCloudMsg->header.stamp;
+  laserCloudOutMsg.header.frame_id = "/livox";
+  pubLaserCloud_temp->publish(laserCloudOutMsg);
+}
 void laserCloudHandler(const sensor_msgs::msg::PointCloud2::SharedPtr laserCloudMsg)
 {
   try {
@@ -251,7 +274,7 @@ void laserCloudHandler(const sensor_msgs::msg::PointCloud2::SharedPtr laserCloud
 
     pcl::toROSMsg(surfPointsFlat, outMsg);
     outMsg.header = laserCloudMsg->header;
-    pubCornerPointsFlat->publish(outMsg);
+    pubSurfPointsFlat->publish(outMsg);
 
   } catch (const std::exception& e) {
     RCLCPP_ERROR(rclcpp::get_logger("scan_registration_horizon"), "Error in laserCloudHandler: %s", e.what());
