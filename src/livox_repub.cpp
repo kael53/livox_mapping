@@ -49,7 +49,7 @@ void LivoxMsgCbk1(const livox_ros_driver2::msg::CustomMsg::SharedPtr livox_msg_i
       sensor_msgs::msg::PointCloud2 pcl_ros_msg;
       pcl::toROSMsg(pcl_in, pcl_ros_msg);
       pcl_ros_msg.header.stamp = timestamp;
-      pcl_ros_msg.header.frame_id = "/livox";  // Removed leading slash for ROS2 convention
+      pcl_ros_msg.header.frame_id = "mid360_link";  // Removed leading slash for ROS2 convention
       pub_pcl_out1->publish(pcl_ros_msg);
     }
     livox_data.clear();

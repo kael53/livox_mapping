@@ -145,7 +145,7 @@ void laserCloudHandler_temp(const sensor_msgs::msg::PointCloud2::SharedPtr laser
   sensor_msgs::msg::PointCloud2 laserCloudOutMsg;
   pcl::toROSMsg(*laserCloudIn, laserCloudOutMsg);
   laserCloudOutMsg.header.stamp = laserCloudMsg->header.stamp;
-  laserCloudOutMsg.header.frame_id = "/livox";
+  laserCloudOutMsg.header.frame_id = "mid360_link"; // Removed leading slash for ROS2 convention
   pubLaserCloud_temp->publish(laserCloudOutMsg);
 }
 void laserCloudHandler(const sensor_msgs::msg::PointCloud2::SharedPtr laserCloudMsg)

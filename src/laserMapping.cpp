@@ -413,8 +413,8 @@ int main(int argc, char** argv)
 
     pubOdomAftMapped = node->create_publisher<nav_msgs::msg::Odometry>("/aft_mapped_to_init", 1);
     nav_msgs::msg::Odometry odomAftMapped;
-    odomAftMapped.header.frame_id = "/camera_init";
-    odomAftMapped.child_frame_id = "/aft_mapped";
+    odomAftMapped.header.frame_id = "camera_init";
+    odomAftMapped.child_frame_id = "aft_mapped";
 
     // Declare parameters
     node->declare_parameter("map_file_path", "");
@@ -1142,13 +1142,13 @@ int main(int argc, char** argv)
           sensor_msgs::msg::PointCloud2 laserCloudSurround3;
           pcl::toROSMsg(*laserCloudSurround2, laserCloudSurround3);
           laserCloudSurround3.header.stamp = timeLaserCloudCornerLast;
-          laserCloudSurround3.header.frame_id = "/camera_init";
+          laserCloudSurround3.header.frame_id = "camera_init";
           pubLaserCloudSurround->publish(laserCloudSurround3);
 
           sensor_msgs::msg::PointCloud2 laserCloudSurround3_corner;
           pcl::toROSMsg(*laserCloudSurround2_corner, laserCloudSurround3_corner);
           laserCloudSurround3_corner.header.stamp = timeLaserCloudCornerLast;
-          laserCloudSurround3_corner.header.frame_id = "/camera_init";
+          laserCloudSurround3_corner.header.frame_id = "camera_init";
           pubLaserCloudSurround_corner->publish(laserCloudSurround3_corner);
           
 
@@ -1166,7 +1166,7 @@ int main(int argc, char** argv)
           sensor_msgs::msg::PointCloud2 laserCloudFullRes3;
           pcl::toROSMsg(*laserCloudFullResColor, laserCloudFullRes3);
           laserCloudFullRes3.header.stamp = timeLaserCloudCornerLast;
-          laserCloudFullRes3.header.frame_id = "/camera_init";
+          laserCloudFullRes3.header.frame_id = "camera_init";
           pubLaserCloudFullRes->publish(laserCloudFullRes3);
 
           *laserCloudFullResColor_pcd += *laserCloudFullResColor;

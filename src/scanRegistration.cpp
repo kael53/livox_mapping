@@ -142,7 +142,7 @@ void laserCloudHandler_temp(const sensor_msgs::msg::PointCloud2::SharedPtr laser
   sensor_msgs::msg::PointCloud2 laserCloudOutMsg;
   pcl::toROSMsg(*laserCloudIn, laserCloudOutMsg);
   laserCloudOutMsg.header.stamp = laserCloudMsg->header.stamp;
-  laserCloudOutMsg.header.frame_id = "/livox";
+  laserCloudOutMsg.header.frame_id = "mid360_link"; // Removed leading slash for ROS2 convention
   pubLaserCloud_temp->publish(laserCloudOutMsg);
 
 }
@@ -508,19 +508,19 @@ void laserCloudHandler(const sensor_msgs::msg::PointCloud2::SharedPtr laserCloud
     sensor_msgs::msg::PointCloud2 laserCloudOutMsg;
     pcl::toROSMsg(*laserCloud, laserCloudOutMsg);
     laserCloudOutMsg.header.stamp = laserCloudMsg->header.stamp;
-    laserCloudOutMsg.header.frame_id = "/livox";
+    laserCloudOutMsg.header.frame_id = "mid360_link"; // Removed leading slash for ROS2 convention
     pubLaserCloud->publish(laserCloudOutMsg);
 
     sensor_msgs::msg::PointCloud2 cornerPointsSharpMsg;
     pcl::toROSMsg(cornerPointsSharp, cornerPointsSharpMsg);
     cornerPointsSharpMsg.header.stamp = laserCloudMsg->header.stamp;
-    cornerPointsSharpMsg.header.frame_id = "/livox";
+    cornerPointsSharpMsg.header.frame_id = "mid360_link"; // Removed leading slash for ROS2 convention
     pubCornerPointsSharp->publish(cornerPointsSharpMsg);
 
     sensor_msgs::msg::PointCloud2 surfPointsFlatMsg;
     pcl::toROSMsg(surfPointsFlat, surfPointsFlatMsg);
     surfPointsFlatMsg.header.stamp = laserCloudMsg->header.stamp;
-    surfPointsFlatMsg.header.frame_id = "/livox";
+    surfPointsFlatMsg.header.frame_id = "mid360_link"; // Removed leading slash for ROS2 convention
     pubSurfPointsFlat->publish(surfPointsFlatMsg);
 }
 
