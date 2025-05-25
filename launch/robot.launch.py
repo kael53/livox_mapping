@@ -10,14 +10,14 @@ def generate_launch_description():
  #       'g1_29dof_lock_waist_with_hand_rev_1_0.urdf'
  #   )
     urdf_path = os.path.join(
-        '/unitree/livox_mapping',
+        get_package_share_directory('livox_mapping'),
         'robots',
         'g1_description',
         'g1_29dof_lock_waist_with_hand_rev_1_0.urdf'
     )
 
     with open(urdf_path, 'r') as infp:
-        robot_description = infp.read()
+        robot_description_content = infp.read()
 
     return LaunchDescription([
         Node(
@@ -25,7 +25,7 @@ def generate_launch_description():
             executable='robot_state_publisher',
             name='robot_state_publisher',
             output='screen',
-            parameters=[{'robot_description': robot_description}]
+            parameters=[{'robot_description': robot_description_content}]
         ),
         Node(
             package='joint_state_publisher',
