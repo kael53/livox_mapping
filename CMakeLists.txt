@@ -133,7 +133,6 @@ install(TARGETS
 install(DIRECTORY
   launch
   rviz_cfg
-  robots
   DESTINATION share/${PROJECT_NAME}
 )
 
